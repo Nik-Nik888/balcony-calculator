@@ -10,6 +10,7 @@ export default [
       sourceType: "module",
       ecmaVersion: 2022,
       globals: {
+        // Браузерные глобальные переменные
         console: "readonly",
         document: "readonly",
         fetch: "readonly",
@@ -19,6 +20,10 @@ export default [
         FileReader: "readonly",
         confirm: "readonly",
         setTimeout: "readonly",
+        clearTimeout: "readonly",
+        AbortController: "readonly",
+        window: "readonly",
+        setInterval: "readonly",
       },
     },
     plugins: {
@@ -43,6 +48,7 @@ export default [
       sourceType: "commonjs",
       ecmaVersion: 2022,
       globals: {
+        // Node.js глобальные переменные
         console: "readonly",
         require: "readonly",
         module: "readonly",

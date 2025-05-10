@@ -1,11 +1,11 @@
-import { initializeApp } from 'firebase/app';
-import { getAnalytics, logEvent as firebaseLogEvent } from 'firebase/analytics';
+import { initializeApp } from "firebase/app";
+import { getAnalytics, logEvent as firebaseLogEvent } from "firebase/analytics";
 import {
   getAuth,
   onAuthStateChanged as firebaseOnAuthStateChanged,
   signInWithEmailAndPassword,
-} from 'firebase/auth';
-import { getFirestore } from 'firebase/firestore';
+} from "firebase/auth";
+import { getFirestore } from "firebase/firestore";
 
 // Конфигурация Firebase
 const firebaseConfig = {
@@ -19,7 +19,7 @@ const firebaseConfig = {
 };
 
 // Проверка обязательных полей конфигурации
-const requiredConfigFields = ['apiKey', 'authDomain', 'projectId', 'appId'];
+const requiredConfigFields = ["apiKey", "authDomain", "projectId", "appId"];
 for (const field of requiredConfigFields) {
   if (!firebaseConfig[field]) {
     throw new Error(`Missing required field: ${field}`);
@@ -38,9 +38,9 @@ try {
 let analytics;
 try {
   analytics = getAnalytics(app);
-  firebaseLogEvent(analytics, 'firebase_initialized', {
-    page_title: 'Balcony Calculator',
-    user_id: 'unknown',
+  firebaseLogEvent(analytics, "firebase_initialized", {
+    page_title: "Balcony Calculator",
+    user_id: "unknown",
   });
 } catch (error) {
   throw new Error(`Firebase Analytics initialization failed: ${error.message}`);
@@ -62,14 +62,14 @@ function logEvent(analyticsInstance, eventName, params) {
   try {
     firebaseLogEvent(analyticsInstance, eventName, {
       ...params,
-      page_title: params.page_title || 'Balcony Calculator',
+      page_title: params.page_title || "Balcony Calculator",
     });
   } catch (error) {
-    firebaseLogEvent(analyticsInstance, 'log_event_error', {
+    firebaseLogEvent(analyticsInstance, "log_event_error", {
       event_name: eventName,
       message: error.message,
-      page_title: 'Balcony Calculator',
-      user_id: params?.user_id || 'unknown',
+      page_title: "Balcony Calculator",
+      user_id: params?.user_id || "unknown",
     });
   }
 }
@@ -83,10 +83,10 @@ function onAuthStateChanged(authInstance, callback) {
   try {
     firebaseOnAuthStateChanged(authInstance, callback);
   } catch (error) {
-    logEvent(analytics, 'auth_state_change_error', {
+    logEvent(analytics, "auth_state_change_error", {
       message: error.message,
-      page_title: 'Balcony Calculator',
-      user_id: 'unknown',
+      page_title: "Balcony Calculator",
+      user_id: "unknown",
     });
   }
 }

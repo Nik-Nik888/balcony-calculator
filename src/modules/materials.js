@@ -1232,7 +1232,12 @@ async function deleteMaterialWrapper(
         page_title: "Balcony Calculator - Manage Materials",
         user_id: userId || "unknown",
       });
-      await loadMaterialsTable(currentPage, showNotification, authToken, userId);
+      await loadMaterialsTable(
+        currentPage,
+        showNotification,
+        authToken,
+        userId,
+      );
       await populateSelects(showNotification, authToken, userId);
       await loadMaterialSelectOptions(showNotification, authToken);
     } else {

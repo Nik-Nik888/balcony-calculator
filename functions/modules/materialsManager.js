@@ -149,7 +149,9 @@ async function getCategories(page, itemsPerPage, authToken, userId) {
       typeof itemsPerPage !== 'number' ||
       itemsPerPage <= 0
     ) {
-      throw new Error('Invalid pagination parameters: page and itemsPerPage must be positive numbers');
+      throw new Error(
+        'Invalid pagination parameters: page and itemsPerPage must be positive numbers'
+      );
     }
     let effectiveUserId = userId;
     if (!userId || typeof userId !== 'string') {
@@ -168,15 +170,19 @@ async function getCategories(page, itemsPerPage, authToken, userId) {
         source: 'cache',
         duration: `${Date.now() - startTime}ms`,
       });
-      return { success: true, categories: categoryCache.data.slice(start, end), total: categoryCache.data.length };
+      return {
+        success: true,
+        categories: categoryCache.data.slice(start, end),
+        total: categoryCache.data.length,
+      };
     }
 
     const materialsSnapshot = await db.collection('materials').select('categories').get();
     const categoriesSet = new Set();
-    materialsSnapshot.forEach((doc) => {
+    materialsSnapshot.forEach(doc => {
       const data = doc.data();
       if (Array.isArray(data.categories)) {
-        data.categories.forEach((cat) => categoriesSet.add(cat));
+        data.categories.forEach(cat => categoriesSet.add(cat));
       }
     });
 
@@ -253,7 +259,9 @@ async function getMaterials(category, page, itemsPerPage, authToken, userId) {
       typeof itemsPerPage !== 'number' ||
       itemsPerPage <= 0
     ) {
-      throw new Error('Invalid pagination parameters: page and itemsPerPage must be positive numbers');
+      throw new Error(
+        'Invalid pagination parameters: page and itemsPerPage must be positive numbers'
+      );
     }
     if (category && typeof category !== 'string') {
       throw new Error('Category must be a string');
@@ -277,7 +285,7 @@ async function getMaterials(category, page, itemsPerPage, authToken, userId) {
       .limit(itemsPerPage)
       .get();
 
-    const materials = snapshot.docs.map((doc) => ({
+    const materials = snapshot.docs.map(doc => ({
       id: doc.id,
       ...doc.data(),
     }));

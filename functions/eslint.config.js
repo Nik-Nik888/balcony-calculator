@@ -22,9 +22,9 @@ module.exports = [
       ...require('eslint:recommended').rules,
       ...prettier.rules,
       // Стилистические правила
-      'indent': ['error', 2],
-      'quotes': ['error', 'single'],
-      'semi': ['error', 'always'],
+      indent: ['error', 2],
+      quotes: ['error', 'single'],
+      semi: ['error', 'always'],
       'max-len': ['error', { code: 100 }],
       'object-curly-spacing': ['error', 'always'],
       // Разрешаем console.warn и console.error
@@ -56,9 +56,9 @@ module.exports = [
       ...require('eslint:recommended').rules,
       ...prettier.rules,
       // Стилистические правила
-      'indent': ['error', 2],
-      'quotes': ['error', 'single'],
-      'semi': ['error', 'always'],
+      indent: ['error', 2],
+      quotes: ['error', 'single'],
+      semi: ['error', 'always'],
       'max-len': ['error', { code: 100 }],
       'object-curly-spacing': ['error', 'always'],
       // Разрешаем все методы console для серверных файлов

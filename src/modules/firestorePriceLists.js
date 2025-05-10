@@ -1,39 +1,72 @@
-import { getMaterials, getCategories as fetchCategories, addMaterial as addMaterialApi, updateMaterial as updateMaterialApi, deleteMaterial as deleteMaterialApi } from './api.js';
-import { validCategories } from './categories.js';
+import { analytics, logEvent } from "./firebase.js";
+import {
+  fetchCategories,
+  addMaterialApi,
+  updateMaterialApi,
+  deleteMaterialApi,
+} from "./api.js";
+
+/**
+ * Логирует ошибки в Firestore для аналитики.
+ * @param {string} action - Действие (например, getCategories, addMaterial).
+ * @param {string} userId - ID пользователя.
+ * @param {Error} error - Объект ошибки.
+ * @param {Object} [extra] - Дополнительные данные для лога.
+ */
+async function logErrorToFirestore(action, userId, error, extra = {}) {
+  await logEvent(analytics, `${action}_failed`, {
+    reason: error.message,
+    page_title: "Balcony Calculator",
+    user_id: userId || "unknown",
+    ...extra,
+  });
+}
 
 /**
  * Получает список категорий через manageMaterials.
  * @param {string} authToken - Токен аутентификации для запросов.
- * @param {string} userId - ID пользователя (для логирования).
+ * @param {string} userId - ID пользователя.
  * @returns {Promise<string[]>} Список категорий.
  */
 async function getCategories(authToken, userId) {
-  console.log('getCategories: Fetching categories', { userId });
-  if (!authToken || typeof authToken !== 'string') {
-    throw new Error('Токен аутентификации отсутствует или недействителен');
-  }
-
-  let page = 0;
-  const itemsPerPage = 200;
-  let allCategories = [];
-  let hasMore = true;
-
-  while (hasMore) {
-    const result = await fetchCategories(page, itemsPerPage, authToken, userId);
-    if (!result.success) {
-      throw new Error(result.error || 'Не удалось загрузить категории');
+  try {
+    if (!authToken || typeof authToken !== "string") {
+      throw new Error("Токен аутентификации отсутствует или недействителен");
     }
 
-    const categories = result.categories || [];
-    allCategories = allCategories.concat(categories);
+    let page = 0;
+    const itemsPerPage = 200;
+    let allCategories = [];
+    let hasMore = true;
 
-    hasMore = categories.length === itemsPerPage;
-    page++;
+    while (hasMore) {
+      const result = await fetchCategories(
+        page,
+        itemsPerPage,
+        authToken,
+        userId,
+      );
+      if (!result.success) {
+        throw new Error(result.error || "Не удалось загрузить категории");
+      }
+
+      const categories = result.categories || [];
+      allCategories = allCategories.concat(categories);
+      hasMore = categories.length === itemsPerPage;
+      page++;
+    }
+
+    const uniqueCategories = [...new Set(allCategories)].sort();
+    logEvent(analytics, "categories_fetched", {
+      categories_count: uniqueCategories.length,
+      page_title: "Balcony Calculator",
+      user_id: userId || "unknown",
+    });
+    return uniqueCategories;
+  } catch (error) {
+    logErrorToFirestore("getCategories", userId, error);
+    throw error;
   }
-
-  const uniqueCategories = [...new Set(allCategories)].sort();
-  console.log('getCategories: Successfully fetched categories:', uniqueCategories, { userId });
-  return uniqueCategories;
 }
 
 /**
@@ -41,34 +74,37 @@ async function getCategories(authToken, userId) {
  * @param {Object} materialData - Данные материала для добавления.
  * @param {string} authToken - Токен аутентификации для запросов.
  * @param {Function} showNotification - Функция для отображения уведомлений.
- * @param {string} userId - ID пользователя (для логирования).
+ * @param {string} userId - ID пользователя.
  * @returns {Promise<void>}
  */
 async function addMaterial(materialData, authToken, showNotification, userId) {
-  console.log('addMaterial: Starting to add material', { materialData, userId });
   try {
-    if (!authToken || typeof authToken !== 'string') {
-      throw new Error('Токен аутентификации отсутствует или недействителен');
+    if (!authToken || typeof authToken !== "string") {
+      throw new Error("Токен аутентификации отсутствует или недействителен");
     }
-    if (typeof showNotification !== 'function') {
-      throw new Error('showNotification must be a function');
+    if (typeof showNotification !== "function") {
+      throw new Error("showNotification must be a function");
+    }
+    if (!materialData || typeof materialData !== "object") {
+      throw new Error("materialData must be a non-empty object");
     }
 
     const result = await addMaterialApi(materialData, authToken, userId);
     if (!result.success) {
-      throw new Error(result.error || 'Не удалось добавить материал');
+      throw new Error(result.error || "Не удалось добавить материал");
     }
 
-    console.log('addMaterial: Material added successfully', { userId });
-    showNotification('Материал успешно добавлен', false);
-  } catch (error) {
-    console.error('addMaterial: Error adding material:', {
-      message: error.message,
-      stack: error.stack,
-      userId,
-      materialData
+    showNotification("Материал успешно добавлен", false);
+    logEvent(analytics, "material_added", {
+      material_name: materialData.name || "unknown",
+      page_title: "Balcony Calculator",
+      user_id: userId || "unknown",
     });
+  } catch (error) {
     showNotification(`Ошибка добавления материала: ${error.message}`, true);
+    logErrorToFirestore("addMaterial", userId, error, {
+      material_data: materialData,
+    });
     throw error;
   }
 }
@@ -79,35 +115,52 @@ async function addMaterial(materialData, authToken, showNotification, userId) {
  * @param {Object} materialData - Новые данные материала.
  * @param {string} authToken - Токен аутентификации для запросов.
  * @param {Function} showNotification - Функция для отображения уведомлений.
- * @param {string} userId - ID пользователя (для логирования).
+ * @param {string} userId - ID пользователя.
  * @returns {Promise<void>}
  */
-async function updateMaterial(materialId, materialData, authToken, showNotification, userId) {
-  console.log(`updateMaterial: Starting to update material with ID ${materialId}`, { materialData, userId });
+async function updateMaterial(
+  materialId,
+  materialData,
+  authToken,
+  showNotification,
+  userId,
+) {
   try {
-    if (!authToken || typeof authToken !== 'string') {
-      throw new Error('Токен аутентификации отсутствует или недействителен');
+    if (!authToken || typeof authToken !== "string") {
+      throw new Error("Токен аутентификации отсутствует или недействителен");
     }
-    if (typeof showNotification !== 'function') {
-      throw new Error('showNotification must be a function');
+    if (typeof showNotification !== "function") {
+      throw new Error("showNotification must be a function");
+    }
+    if (!materialId || typeof materialId !== "string") {
+      throw new Error("materialId must be a non-empty string");
+    }
+    if (!materialData || typeof materialData !== "object") {
+      throw new Error("materialData must be a non-empty object");
     }
 
-    const result = await updateMaterialApi(materialId, materialData, authToken, userId);
-    if (!result.success) {
-      throw new Error(result.error || 'Не удалось обновить материал');
-    }
-
-    console.log('updateMaterial: Material updated successfully', { materialId, userId });
-    showNotification('Материал успешно обновлён', false);
-  } catch (error) {
-    console.error('updateMaterial: Error updating material:', {
-      message: error.message,
-      stack: error.stack,
+    const result = await updateMaterialApi(
       materialId,
+      materialData,
+      authToken,
       userId,
-      materialData
+    );
+    if (!result.success) {
+      throw new Error(result.error || "Не удалось обновить материал");
+    }
+
+    showNotification("Материал успешно обновлён", false);
+    logEvent(analytics, "material_updated", {
+      material_id: materialId,
+      page_title: "Balcony Calculator",
+      user_id: userId || "unknown",
     });
+  } catch (error) {
     showNotification(`Ошибка обновления материала: ${error.message}`, true);
+    logErrorToFirestore("updateMaterial", userId, error, {
+      material_id: materialId,
+      material_data: materialData,
+    });
     throw error;
   }
 }
@@ -117,37 +170,39 @@ async function updateMaterial(materialId, materialData, authToken, showNotificat
  * @param {string} materialId - ID материала для удаления.
  * @param {string} authToken - Токен аутентификации для запросов.
  * @param {Function} showNotification - Функция для отображения уведомлений.
- * @param {string} userId - ID пользователя (для логирования).
+ * @param {string} userId - ID пользователя.
  * @returns {Promise<void>}
  */
 async function deleteMaterial(materialId, authToken, showNotification, userId) {
-  console.log(`deleteMaterial: Starting to delete material with ID ${materialId}`, { userId });
   try {
-    if (!authToken || typeof authToken !== 'string') {
-      throw new Error('Токен аутентификации отсутствует или недействителен');
+    if (!authToken || typeof authToken !== "string") {
+      throw new Error("Токен аутентификации отсутствует или недействителен");
     }
-    if (typeof showNotification !== 'function') {
-      throw new Error('showNotification must be a function');
+    if (typeof showNotification !== "function") {
+      throw new Error("showNotification must be a function");
+    }
+    if (!materialId || typeof materialId !== "string") {
+      throw new Error("materialId must be a non-empty string");
     }
 
     const result = await deleteMaterialApi(materialId, authToken, userId);
     if (!result.success) {
-      throw new Error(result.error || 'Не удалось удалить материал');
+      throw new Error(result.error || "Не удалось удалить материал");
     }
 
-    console.log('deleteMaterial: Material deleted successfully', { materialId, userId });
-    showNotification('Материал успешно удалён', false);
-  } catch (error) {
-    console.error('deleteMaterial: Error deleting material:', {
-      message: error.message,
-      stack: error.stack,
-      materialId,
-      userId
+    showNotification("Материал успешно удалён", false);
+    logEvent(analytics, "material_deleted", {
+      material_id: materialId,
+      page_title: "Balcony Calculator",
+      user_id: userId || "unknown",
     });
+  } catch (error) {
     showNotification(`Ошибка удаления материала: ${error.message}`, true);
+    logErrorToFirestore("deleteMaterial", userId, error, {
+      material_id: materialId,
+    });
     throw error;
   }
 }
 
-// Экспортируем функции
 export { getCategories, addMaterial, updateMaterial, deleteMaterial };

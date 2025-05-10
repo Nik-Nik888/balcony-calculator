@@ -250,7 +250,13 @@ exports.manageMaterials = onRequest(
                   .status(400)
                   .json({ success: false, error: 'Invalid pagination parameters' });
               }
-              const result = await getMaterials(category, pageNum, items, req.authToken, req.userId);
+              const result = await getMaterials(
+                category,
+                pageNum,
+                items,
+                req.authToken,
+                req.userId
+              );
               await logToFirestore(
                 result.success ? 'action_processed' : 'action_failed',
                 req.userId,
@@ -261,7 +267,7 @@ exports.manageMaterials = onRequest(
                   success: result.success,
                   error: result.error || null,
                   duration: `${Date.now() - startTime}ms`,
-                },
+                }
               );
               return res.status(200).json(result);
             },
@@ -293,7 +299,7 @@ exports.manageMaterials = onRequest(
                   success: result.success,
                   error: result.error || null,
                   duration: `${Date.now() - startTime}ms`,
-                },
+                }
               );
               return res.status(result.success ? 200 : 404).json(result);
             },
@@ -328,7 +334,7 @@ exports.manageMaterials = onRequest(
                   success: result.success,
                   error: result.error || null,
                   duration: `${Date.now() - startTime}ms`,
-                },
+                }
               );
               return res.status(result.success ? 200 : 500).json(result);
             },
@@ -376,7 +382,7 @@ exports.manageMaterials = onRequest(
                   success: result.success,
                   error: result.error || null,
                   duration: `${Date.now() - startTime}ms`,
-                },
+                }
               );
               return res.status(result.success ? 200 : 400).json(result);
             },
@@ -408,7 +414,7 @@ exports.manageMaterials = onRequest(
                   success: result.success,
                   error: result.error || null,
                   duration: `${Date.now() - startTime}ms`,
-                },
+                }
               );
               return res.status(result.success ? 200 : 404).json(result);
             },
@@ -456,7 +462,7 @@ exports.manageMaterials = onRequest(
                   success: result.success,
                   error: result.error || null,
                   duration: `${Date.now() - startTime}ms`,
-                },
+                }
               );
               return res.status(result.success ? 200 : 400).json(result);
             },
@@ -498,7 +504,7 @@ exports.manageMaterials = onRequest(
         return res.status(500).json({ success: false, error: `Server error: ${error.message}` });
       }
     });
-  },
+  }
 );
 
 /**
@@ -561,11 +567,13 @@ exports.calculateMaterials = onRequest(
             });
             await logToFirestore('invalid_request', req.user.uid, ip, {
               endpoint: 'calculateMaterials',
-              error: 'tabName and data are required and must be a string and an object respectively',
+              error:
+                'tabName and data are required and must be a string and an object respectively',
             });
             return res.status(400).json({
               success: false,
-              error: 'tabName and data are required and must be a string and an object respectively',
+              error:
+                'tabName and data are required and must be a string and an object respectively',
             });
           }
 
@@ -594,7 +602,7 @@ exports.calculateMaterials = onRequest(
               totalCost: result.totalCost || null,
               resultsCount: result.results ? result.results.length : 0,
               duration: `${Date.now() - startTime}ms`,
-            },
+            }
           );
 
           return res.status(result.success ? 200 : 400).json(result);
@@ -617,5 +625,5 @@ exports.calculateMaterials = onRequest(
         return res.status(500).json({ success: false, error: `Server error: ${error.message}` });
       }
     });
-  },
+  }
 );

@@ -60,7 +60,7 @@ async function migrateCategories(req, res) {
     const batch = db.batch();
     let updatedCount = 0;
 
-    snapshot.forEach((doc) => {
+    snapshot.forEach(doc => {
       const data = doc.data();
       if (typeof data.categories === 'string') {
         batch.update(doc.ref, {
