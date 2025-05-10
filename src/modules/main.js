@@ -1,39 +1,101 @@
-import { initializeMaterialActions, loadMaterialsTable, populateSelects } from './materials.js';
-import { initializeTabs } from './tabs.js';
-import { validateForm } from './validation.js';
-import { initializeCalculation } from './calculation.js';
-import { analytics, logEvent, auth, onAuthStateChanged } from './firebase.js';
+import {
+  initializeMaterialActions,
+  loadMaterialsTable,
+  populateSelects,
+} from "./materials.js";
+import { initializeTabs } from "./tabs.js";
+import { validateForm } from "./validation.js";
+import { initializeCalculation } from "./calculation.js";
+import { analytics, logEvent, auth, onAuthStateChanged } from "./firebase.js";
 
-// Функция для отображения уведомлений
+/**
+ * Логирует ошибки в Firestore для аналитики.
+ * @param {string} action - Действие (например, initialize).
+ * @param {string} userId - ID пользователя.
+ * @param {Error} error - Объект ошибки.
+ * @param {Object} [extra] - Дополнительные данные для лога.
+ */
+async function logErrorToFirestore(action, userId, error, extra = {}) {
+  await logEvent(analytics, `${action}_failed`, {
+    reason: error.message,
+    page_title: "Balcony Calculator",
+    user_id: userId || "unknown",
+    ...extra,
+  });
+}
+
+/**
+ * Логирует событие в Firestore.
+ * @param {Object} db - Инстанс Firestore.
+ * @param {string} event - Название события.
+ * @param {string} userId - ID пользователя.
+ * @param {string} pageTitle - Заголовок страницы.
+ */
+async function logToFirestore(db, event, userId, pageTitle) {
+  try {
+    await db.collection("analytics").add({
+      event,
+      userId,
+      page_title: pageTitle,
+      timestamp: new Date().toISOString(),
+    });
+  } catch (firestoreError) {
+    logEvent(analytics, "firestore_log_failed", {
+      event,
+      reason: firestoreError.message,
+      page_title: "Balcony Calculator",
+      user_id: userId || "unknown",
+    });
+  }
+}
+
+/**
+ * Отображает уведомления пользователю.
+ * @param {string} message - Сообщение уведомления.
+ * @param {boolean} [isError=false] - Является ли уведомление ошибкой.
+ */
 function showNotification(message, isError = false) {
-  const notification = document.getElementById('notification');
+  const notification = document.getElementById("notification");
   if (!notification) {
-    console.error('showNotification: Notification element not found in DOM');
+    logEvent(analytics, "notification_failed", {
+      reason: "Notification element not found",
+      page_title: "Balcony Calculator",
+      user_id: "unknown",
+    });
     return;
   }
   notification.textContent = message;
   notification.className = isError
-    ? 'notification notification--error'
-    : 'notification notification--success';
-  notification.style.display = 'block';
+    ? "notification notification--error"
+    : "notification notification--success";
+  notification.style.display = "block";
   setTimeout(() => {
-    notification.style.display = 'none';
+    notification.style.display = "none";
   }, 5000);
 }
 
-// Основная функция инициализации
+/**
+ * Инициализирует приложение.
+ * @returns {Promise<void>}
+ */
 async function initialize() {
-  console.log('initialize: Starting initialization');
+  logEvent(analytics, "initialization_initiated", {
+    page_title: "Balcony Calculator",
+    user_id: "unknown",
+  });
 
   try {
-    // Проверяем статус аутентификации
     await new Promise((resolve, reject) => {
       onAuthStateChanged(auth, async (user) => {
         try {
           if (!user) {
-            const errorMsg = 'Пользователь не аутентифицирован';
-            console.error('initialize:', errorMsg);
+            const errorMsg = "Пользователь не аутентифицирован";
             showNotification(errorMsg, true);
+            logErrorToFirestore(
+              "initialize",
+              "unauthenticated",
+              new Error(errorMsg),
+            );
             reject(new Error(errorMsg));
             return;
           }
@@ -43,43 +105,17 @@ async function initialize() {
           const idTokenResult = await user.getIdTokenResult();
           const isAdmin = idTokenResult.claims.admin === true;
 
-          console.log('initialize: User authenticated', { userId, isAdmin });
+          logEvent(analytics, "sign_in", {
+            user_id: userId,
+            page_title: "Balcony Calculator",
+          });
+          const { db } = await import("./firebase.js");
+          await logToFirestore(db, "sign_in", userId, "Balcony Calculator");
 
-          // Логируем событие входа в аналитику
-          if (analytics && typeof logEvent === 'function') {
-            logEvent(analytics, 'sign_in', {
-              user_id: userId,
-              page_title: 'Balcony Calculator',
-            });
-
-            // Записываем событие в Firestore
-            try {
-              const { db } = await import('./firebase.js');
-              await db.collection('analytics').add({
-                event: 'sign_in',
-                userId,
-                page_title: 'Balcony Calculator',
-                timestamp: new Date().toISOString(),
-              });
-            } catch (firestoreError) {
-              console.warn('initialize: Failed to log sign_in to Firestore', {
-                error: firestoreError.message,
-                userId,
-              });
-            }
-          }
-
-          // Инициализация вкладок
-          console.log('initialize: Initializing tabs', { userId });
-          await initializeTabs(showNotification);
-
-          // Заполняем выпадающие списки (для всех пользователей)
-          console.log('initialize: Populating selects', { userId });
+          await initializeTabs(showNotification, userId);
           await populateSelects(showNotification, token, userId);
 
-          // Инициализация управления материалами (только для администратора)
           if (isAdmin) {
-            console.log('initialize: Initializing material actions', { userId });
             await initializeMaterialActions(
               showNotification,
               validateForm,
@@ -88,108 +124,69 @@ async function initialize() {
               token,
               userId,
             );
-
-            // Логируем событие администраторского доступа
-            if (analytics && typeof logEvent === 'function') {
-              logEvent(analytics, 'admin_access_granted', {
-                page_title: 'Balcony Calculator - Admin Mode',
-                user_id: userId,
-              });
-
-              // Записываем событие в Firestore
-              try {
-                const { db } = await import('./firebase.js');
-                await db.collection('analytics').add({
-                  event: 'admin_access_granted',
-                  userId,
-                  page_title: 'Balcony Calculator - Admin Mode',
-                  timestamp: new Date().toISOString(),
-                });
-              } catch (firestoreError) {
-                console.warn('initialize: Failed to log admin_access_granted to Firestore', {
-                  error: firestoreError.message,
-                  userId,
-                });
-              }
-            }
-
-            // Загружаем таблицу материалов только если активна вкладка "Управление материалами"
-            const activeTab = document
-              .querySelector('.tab__button--active')
-              ?.getAttribute('data-tab');
-            if (activeTab === 'tab12') {
-              console.log('initialize: Loading materials table', { userId });
-              await loadMaterialsTable(1, showNotification, token, userId);
-            } else {
-              console.log('initialize: Skipping materials table load (admin tab not active)', {
-                userId,
-              });
-            }
-          } else {
-            console.log('initialize: Skipping material actions initialization (admin access not granted)', {
-              userId,
-            });
-          }
-
-          // Инициализация расчётов
-          console.log('initialize: Initializing calculation', { userId });
-          await initializeCalculation(showNotification, validateForm, token, userId);
-
-          // Логируем событие page_view
-          if (analytics && typeof logEvent === 'function') {
-            logEvent(analytics, 'page_view', {
-              page_title: 'Balcony Calculator',
+            logEvent(analytics, "admin_access_granted", {
+              page_title: "Balcony Calculator - Admin Mode",
               user_id: userId,
             });
+            await logToFirestore(
+              db,
+              "admin_access_granted",
+              userId,
+              "Balcony Calculator - Admin Mode",
+            );
 
-            // Записываем событие в Firestore
-            try {
-              const { db } = await import('./firebase.js');
-              await db.collection('analytics').add({
-                event: 'page_view',
-                userId,
-                page_title: 'Balcony Calculator',
-                timestamp: new Date().toISOString(),
-              });
-            } catch (firestoreError) {
-              console.warn('initialize: Failed to log page_view to Firestore', {
-                error: firestoreError.message,
-                userId,
-              });
+            const activeTab = document
+              .querySelector(".tab__button--active")
+              ?.getAttribute("data-tab");
+            if (activeTab === "tab12") {
+              await loadMaterialsTable(1, showNotification, token, userId);
             }
-          } else {
-            console.warn('initialize: Analytics or logEvent not available', { userId });
           }
 
-          console.log('initialize: Initialization completed', { userId });
+          await initializeCalculation(
+            showNotification,
+            validateForm,
+            token,
+            userId,
+          );
+
+          logEvent(analytics, "page_view", {
+            page_title: "Balcony Calculator",
+            user_id: userId,
+          });
+          await logToFirestore(db, "page_view", userId, "Balcony Calculator");
+
+          logEvent(analytics, "initialization_completed", {
+            page_title: "Balcony Calculator",
+            user_id: userId,
+          });
           resolve();
         } catch (error) {
-          console.error('initialize: Error during auth state check:', {
-            message: error.message,
-            stack: error.stack,
-            userId: user?.uid || 'unauthenticated',
-          });
           showNotification(`Ошибка аутентификации: ${error.message}`, true);
+          logErrorToFirestore(
+            "initialize",
+            user?.uid || "unauthenticated",
+            error,
+          );
           reject(error);
         }
       });
     });
   } catch (error) {
-    console.error('initialize: Critical error during initialization:', {
-      message: error.message,
-      stack: error.stack,
-      userId: 'unauthenticated',
-    });
     showNotification(
-      `Критическая ошибка инициализации: ${error.message}. Проверьте консоль для деталей.`,
+      `Критическая ошибка инициализации: ${error.message}`,
       true,
     );
+    logErrorToFirestore("initialize", "unauthenticated", error);
     throw error;
   }
 }
 
 // Запускаем инициализацию после загрузки DOM
-document.addEventListener('DOMContentLoaded', async () => {
-  console.log('DOM fully loaded and parsed');
+document.addEventListener("DOMContentLoaded", async () => {
+  logEvent(analytics, "dom_loaded", {
+    page_title: "Balcony Calculator",
+    user_id: "unknown",
+  });
   await initialize();
 });
