@@ -1,0 +1,602 @@
+<!DOCTYPE html>
+   <html lang="ru">
+   <head>
+     <meta charset="UTF-8">
+     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+     <meta name="description" content="Калькулятор материалов для балконов К2">
+     <title>Balcony Calculator</title>
+     <link rel="stylesheet" href="/styles.css">
+     <link rel="icon" href="/favicon.ico.png" type="image/png">
+   </head>
+   <body>
+     <div class="container">
+       <h1 class="page-title">Расчет материалов К2 Балкон</h1>
+       
+       <header class="header">
+         <div class="form-group">
+           <label for="orderNumberInput">Номер заказа:</label>
+           <input type="text" id="dimensionsInput" placeholder="Длина x Ширина x Высота (например, 1000x500x0)" pattern="^(\d+(\.\d+)?)x(\d+(\.\d+)?)(x(\d+(\.\d+)?))?$" title="Введите размеры в формате 'длина x ширина x высота', например '1000x500x0'. Длина и ширина должны быть больше 0." />
+           <span class="error-message" id="orderNumberInput-error" aria-live="polite"></span>
+         </div>
+         <div class="form-group">
+           <label for="addressInput">Адрес заказа:</label>
+           <input type="text" id="addressInput" class="input-field" placeholder="Адрес заказа" required title="Введите адрес (например, ул. Ленина, д. 10)" aria-required="true" autocomplete="street-address">
+           <span class="error-message" id="addressInput-error" aria-live="polite"></span>
+         </div>
+         <div class="form-group">
+           <label for="phoneInput">Телефон:</label>
+           <input type="tel" id="phoneInput" class="input-field" placeholder="Телефон" required title="Введите телефон (например, +7 999 123-45-67)" aria-required="true" autocomplete="tel">
+           <span class="error-message" id="phoneInput-error" aria-live="polite"></span>
+         </div>
+       </header>
+
+       <nav class="tabs" role="tablist">
+         <button class="tab__button tab__button--active" data-tab="tab1" role="tab" aria-selected="true" aria-controls="tab1">На заезд</button>
+         <button class="tab__button" data-tab="tab2" role="tab" aria-selected="false" aria-controls="tab2">Остекление</button>
+         <button class="tab__button" data-tab="tab3" role="tab" aria-selected="false" aria-controls="tab3">Главная стена</button>
+         <button class="tab__button" data-tab="tab4" role="tab" aria-selected="false" aria-controls="tab4">Фасадная стена</button>
+         <button class="tab__button" data-tab="tab5" role="tab" aria-selected="false" aria-controls="tab5">БЛ стена</button>
+         <button class="tab__button" data-tab="tab6" role="tab" aria-selected="false" aria-controls="tab6">БП стена</button>
+         <button class="tab__button" data-tab="tab7" role="tab" aria-selected="false" aria-controls="tab7">Потолок</button>
+         <button class="tab__button" data-tab="tab8" role="tab" aria-selected="false" aria-controls="tab8">Полы</button>
+         <button class="tab__button" data-tab="tab9" role="tab" aria-selected="false" aria-controls="tab9">Электрика</button>
+         <button class="tab__button" data-tab="tab10" role="tab" aria-selected="false" aria-controls="tab10">Мебель</button>
+         <button class="tab__button" data-tab="tab11" role="tab" aria-selected="false" aria-controls="tab11">Доп. параметр</button>
+         <button class="tab__button" data-tab="tab12" role="tab" aria-selected="false" aria-controls="tab12">Управ. материалами</button>
+       </nav>
+
+       <div id="tab1" class="tab-content tab-content--active" role="tabpanel">
+         <h2>На заезд</h2>
+         <div class="form-group">
+           <label for="entryListToggle">Список на заезд:</label>
+           <select id="entryListToggle" class="arrival-list" aria-label="Список на заезд">
+             <option value="no">НЕТ</option>
+             <option value="yes">ДА</option>
+           </select>
+         </div>
+         <div class="form-group">
+           <label for="entryFastenersToggle">Крепеж:</label>
+           <select id="entryFastenersToggle" class="fasteners" aria-label="Крепеж">
+             <option value="no">НЕТ</option>
+             <option value="yes">ДА</option>
+           </select>
+         </div>
+         <div class="form-group">
+           <label for="entryTilingToggle">Плиточные работы:</label>
+           <select id="entryTilingToggle" aria-label="Плиточные работы">
+             <option value="no">НЕТ</option>
+             <option value="yes">ДА</option>
+           </select>
+         </div>
+         <div class="form-group">
+           <label for="extraMaterialTab1">Доп. параметр:</label>
+           <div class="form-row extra-material-row" data-tab-id="tab1">
+             <select id="extraMaterialTab1" class="extra-material" aria-label="Дополнительный материал"></select>
+             <input type="number" id="extraQuantityTab1" class="input-field" placeholder="Количество" min="0" step="1" required title="Введите количество (например, 5)" aria-required="true">
+             <span class="error-message" id="extraQuantityTab1-error" aria-live="polite"></span>
+             <button class="add-button" data-tab-id="tab1" aria-label="Добавить еще материал">Добавить еще</button>
+           </div>
+         </div>
+       </div>
+
+       <div id="tab2" class="tab-content" role="tabpanel">
+         <h2>Остекление</h2>
+         <div class="form-group">
+           <label for="glazingTypeSelectTab2">Что делаем:</label>
+           <select id="glazingTypeSelectTab2" class="glazing-type" data-static="true" aria-label="Что делаем">
+             <option value="">Выберите опцию</option>
+           </select>
+           <label for="frameTypeSelectTab2">Основная рама:</label>
+           <select id="frameTypeSelectTab2" class="frame-type" aria-label="Основная рама"></select>
+           <label for="exteriorFinishSelectTab2">Наружная отделка:</label>
+           <select id="exteriorFinishSelectTab2" class="exterior-finish" data-static="true" aria-label="Наружная отделка">
+             <option value="">Выберите опцию</option>
+             <option value="no">Нет</option>
+             <option value="yes">Да</option>
+           </select>
+           <label for="balconyBlockSelectTab2">Замена балконного блока:</label>
+           <select id="balconyBlockSelectTab2" class="balcony-block" data-static="true" aria-label="Замена балконного блока">
+             <option value="">Выберите опцию</option>
+             <option value="no">Нет</option>
+             <option value="yes">Да</option>
+           </select>
+           <label for="windowTypeSelectTab2">Окно:</label>
+           <div class="form-row">
+             <select id="windowTypeSelectTab2" class="window-type" aria-label="Вариант окна">
+               <option value="">Выберите вариант окна</option>
+             </select>
+             <input type="number" id="windowQuantityInputTab2" class="input-field" placeholder="Количество" min="0" step="1" required title="Введите количество окон (например, 2)" aria-required="true">
+             <span class="error-message" id="windowQuantityInputTab2-error" aria-live="polite"></span>
+           </div>
+           <label for="windowSlopesSelectTab2">Откосы для окон:</label>
+           <select id="windowSlopesSelectTab2" class="window-slopes" data-static="true" aria-label="Откосы для окон">
+             <option value="">Выберите опцию</option>
+             <option value="no">Нет</option>
+             <option value="yes">Да</option>
+           </select>
+           <label for="sillTypeSelectTab2">Подоконники:</label>
+           <select id="sillTypeSelectTab2" class="sill-type" data-static="true" aria-label="Подоконники">
+             <option value="">Выберите опцию</option>
+             <option value="no">Нет</option>
+             <option value="yes">Да</option>
+           </select>
+           <label for="roofTypeSelectTab2">Крыша:</label>
+           <select id="roofTypeSelectTab2" class="roof-type" data-static="true" aria-label="Крыша">
+             <option value="">Выберите опцию</option>
+             <option value="no">Нет</option>
+             <option value="metal">Металл</option>
+             <option value="polycarbonate">Поликарбонат</option>
+           </select>
+           <label for="extraMaterialTab2">Доп. параметр:</label>
+           <div class="form-row extra-material-row" data-tab-id="tab2">
+             <select id="extraMaterialTab2" class="extra-material" aria-label="Дополнительный материал"></select>
+             <input type="number" id="extraQuantityTab2" class="input-field" placeholder="Количество" min="0" step="1" required title="Введите количество (например, 5)" aria-required="true">
+             <span class="error-message" id="extraQuantityTab2-error" aria-live="polite"></span>
+             <button class="add-button" data-tab-id="tab2" aria-label="Добавить еще материал">Добавить еще</button>
+           </div>
+         </div>
+       </div>
+
+       <div id="tab3" class="tab-content" role="tabpanel">
+         <h2>Главная стена</h2>
+         <div class="form-group">
+           <div class="form-row main-row">
+             <div class="form-group">
+               <label for="lengthTab3">Длина (мм):</label>
+               <input type="number" id="lengthTab3" class="input-field" placeholder="Длина (мм)" min="0" step="1" required title="Введите длину в мм (например, 3000)" aria-required="true">
+               <span class="error-message" id="lengthTab3-error" aria-live="polite"></span>
+             </div>
+             <div class="form-group">
+               <label for="widthTab3">Ширина (мм):</label>
+               <input type="number" id="widthTab3" class="input-field" placeholder="Ширина (мм)" min="0" step="1" required title="Введите ширину в мм (например, 2000)" aria-required="true">
+               <span class="error-message" id="widthTab3-error" aria-live="polite"></span>
+             </div>
+           </div>
+           <label for="finishTypeTab3">Вид отделки:</label>
+           <select id="finishTypeTab3" class="finish-type" aria-label="Вид отделки"></select>
+           <label for="wallPaintingTab3">Покраска стен:</label>
+           <select id="wallPaintingTab3" class="wall-painting" data-static="true" aria-label="Покраска стен">
+             <option value="">Выберите опцию</option>
+             <option value="no">Нет</option>
+             <option value="yes">Да</option>
+           </select>
+           <label for="insulationTypeTab3">Вид утепления:</label>
+           <select id="insulationTypeTab3" class="insulation-type" aria-label="Вид утепления"></select>
+           <label for="finishDirectionTab3">Направление отделки:</label>
+           <select id="finishDirectionTab3" class="finish-direction" data-static="true" aria-label="Направление отделки">
+             <option value="">Выберите опцию</option>
+             <option value="vertical">Вертикально</option>
+             <option value="horizontal">Горизонтально</option>
+           </select>
+           <label for="extraMaterialTab3">Доп. параметр:</label>
+           <div class="form-row extra-material-row" data-tab-id="tab3">
+             <select id="extraMaterialTab3" class="extra-material" aria-label="Дополнительный материал"></select>
+             <input type="number" id="extraQuantityTab3" class="input-field" placeholder="Количество" min="0" step="1" required title="Введите количество (например, 5)" aria-required="true">
+             <span class="error-message" id="extraQuantityTab3-error" aria-live="polite"></span>
+             <button class="add-button" data-tab-id="tab3" aria-label="Добавить еще материал">Добавить еще</button>
+           </div>
+         </div>
+       </div>
+
+       <div id="tab4" class="tab-content" role="tabpanel">
+         <h2>Фасадная стена</h2>
+         <div class="form-group">
+           <div class="form-row main-row">
+             <div class="form-group">
+               <label for="lengthTab4">Длина (мм):</label>
+               <input type="number" id="lengthTab4" class="input-field" placeholder="Длина (мм)" min="0" step="1" required title="Введите длину в мм (например, 3000)" aria-required="true">
+               <span class="error-message" id="lengthTab4-error" aria-live="polite"></span>
+             </div>
+             <div class="form-group">
+               <label for="widthTab4">Ширина (мм):</label>
+               <input type="number" id="widthTab4" class="input-field" placeholder="Ширина (мм)" min="0" step="1" required title="Введите ширину в мм (например, 2000)" aria-required="true">
+               <span class="error-message" id="widthTab4-error" aria-live="polite"></span>
+             </div>
+           </div>
+           <label for="finishTypeTab4">Вид отделки:</label>
+           <select id="finishTypeTab4" class="finish-type" aria-label="Вид отделки"></select>
+           <label for="wallPaintingTab4">Покраска стен:</label>
+           <select id="wallPaintingTab4" class="wall-painting" data-static="true" aria-label="Покраска стен">
+             <option value="">Выберите опцию</option>
+             <option value="no">Нет</option>
+             <option value="yes">Да</option>
+           </select>
+           <label for="insulationTypeTab4">Вид утепления:</label>
+           <select id="insulationTypeTab4" class="insulation-type" aria-label="Вид утепления"></select>
+           <label for="finishDirectionTab4">Направление отделки:</label>
+           <select id="finishDirectionTab4" class="finish-direction" data-static="true" aria-label="Направление отделки">
+             <option value="">Выберите опцию</option>
+             <option value="vertical">Вертикально</option>
+             <option value="horizontal">Горизонтально</option>
+           </select>
+           <label for="extraMaterialTab4">Доп. параметр:</label>
+           <div class="form-row extra-material-row" data-tab-id="tab4">
+             <select id="extraMaterialTab4" class="extra-material" aria-label="Дополнительный материал"></select>
+             <input type="number" id="extraQuantityTab4" class="input-field" placeholder="Количество" min="0" step="1" required title="Введите количество (например, 5)" aria-required="true">
+             <span class="error-message" id="extraQuantityTab4-error" aria-live="polite"></span>
+             <button class="add-button" data-tab-id="tab4" aria-label="Добавить еще материал">Добавить еще</button>
+           </div>
+         </div>
+       </div>
+
+       <div id="tab5" class="tab-content" role="tabpanel">
+         <h2>БЛ стена</h2>
+         <div class="form-group">
+           <div class="form-row main-row">
+             <div class="form-group">
+               <label for="lengthTab5">Длина (мм):</label>
+               <input type="number" id="lengthTab5" class="input-field" placeholder="Длина (мм)" min="0" step="1" required title="Введите длину в мм (например, 3000)" aria-required="true">
+               <span class="error-message" id="lengthTab5-error" aria-live="polite"></span>
+             </div>
+             <div class="form-group">
+               <label for="widthTab5">Ширина (мм):</label>
+               <input type="number" id="widthTab5" class="input-field" placeholder="Ширина (мм)" min="0" step="1" required title="Введите ширину в мм (например, 2000)" aria-required="true">
+               <span class="error-message" id="widthTab5-error" aria-live="polite"></span>
+             </div>
+           </div>
+           <label for="finishTypeTab5">Вид отделки:</label>
+           <select id="finishTypeTab5" class="finish-type" aria-label="Вид отделки"></select>
+           <label for="wallPaintingTab5">Покраска стен:</label>
+           <select id="wallPaintingTab5" class="wall-painting" data-static="true" aria-label="Покраска стен">
+             <option value="">Выберите опцию</option>
+             <option value="no">Нет</option>
+             <option value="yes">Да</option>
+           </select>
+           <label for="insulationTypeTab5">Вид утепления:</label>
+           <select id="insulationTypeTab5" class="insulation-type" aria-label="Вид утепления"></select>
+           <label for="finishDirectionTab5">Направление отделки:</label>
+           <select id="finishDirectionTab5" class="finish-direction" data-static="true" aria-label="Направление отделки">
+             <option value="">Выберите опцию</option>
+             <option value="vertical">Вертикально</option>
+             <option value="horizontal">Горизонтально</option>
+           </select>
+           <label for="extraMaterialTab5">Доп. параметр:</label>
+           <div class="form-row extra-material-row" data-tab-id="tab5">
+             <select id="extraMaterialTab5" class="extra-material" aria-label="Дополнительный материал"></select>
+             <input type="number" id="extraQuantityTab5" class="input-field" placeholder="Количество" min="0" step="1" required title="Введите количество (например, 5)" aria-required="true">
+             <span class="error-message" id="extraQuantityTab5-error" aria-live="polite"></span>
+             <button class="add-button" data-tab-id="tab5" aria-label="Добавить еще материал">Добавить еще</button>
+           </div>
+         </div>
+       </div>
+
+       <div id="tab6" class="tab-content" role="tabpanel">
+         <h2>БП стена</h2>
+         <div class="form-group">
+           <div class="form-row main-row">
+             <div class="form-group">
+               <label for="lengthTab6">Длина (мм):</label>
+               <input type="number" id="lengthTab6" class="input-field" placeholder="Длина (мм)" min="0" step="1" required title="Введите длину в мм (например, 3000)" aria-required="true">
+               <span class="error-message" id="lengthTab6-error" aria-live="polite"></span>
+             </div>
+             <div class="form-group">
+               <label for="widthTab6">Ширина (мм):</label>
+               <input type="number" id="widthTab6" class="input-field" placeholder="Ширина (мм)" min="0" step="1" required title="Введите ширину в мм (например, 2000)" aria-required="true">
+               <span class="error-message" id="widthTab6-error" aria-live="polite"></span>
+             </div>
+           </div>
+           <label for="finishTypeTab6">Вид отделки:</label>
+           <select id="finishTypeTab6" class="finish-type" aria-label="Вид отделки"></select>
+           <label for="wallPaintingTab6">Покраска стен:</label>
+           <select id="wallPaintingTab6" class="wall-painting" data-static="true" aria-label="Покраска стен">
+             <option value="">Выберите опцию</option>
+             <option value="no">Нет</option>
+             <option value="yes">Да</option>
+           </select>
+           <label for="insulationTypeTab6">Вид утепления:</label>
+           <select id="insulationTypeTab6" class="insulation-type" aria-label="Вид утепления"></select>
+           <label for="finishDirectionTab6">Направление отделки:</label>
+           <select id="finishDirectionTab6" class="finish-direction" data-static="true" aria-label="Направление отделки">
+             <option value="">Выберите опцию</option>
+             <option value="vertical">Вертикально</option>
+             <option value="horizontal">Горизонтально</option>
+           </select>
+           <label for="extraMaterialTab6">Доп. параметр:</label>
+           <div class="form-row extra-material-row" data-tab-id="tab6">
+             <select id="extraMaterialTab6" class="extra-material" aria-label="Дополнительный материал"></select>
+             <input type="number" id="extraQuantityTab6" class="input-field" placeholder="Количество" min="0" step="1" required title="Введите количество (например, 5)" aria-required="true">
+             <span class="error-message" id="extraQuantityTab6-error" aria-live="polite"></span>
+             <button class="add-button" data-tab-id="tab6" aria-label="Добавить еще материал">Добавить еще</button>
+           </div>
+         </div>
+       </div>
+
+       <div id="tab7" class="tab-content" role="tabpanel">
+         <h2>Потолок</h2>
+         <div class="form-group">
+           <div class="form-row main-row">
+             <div class="form-group">
+               <label for="lengthTab7">Длина (мм):</label>
+               <input type="number" id="lengthTab7" class="input-field" placeholder="Длина (мм)" min="0" step="1" required title="Введите длину в мм (например, 3000)" aria-required="true">
+               <span class="error-message" id="lengthTab7-error" aria-live="polite"></span>
+             </div>
+             <div class="form-group">
+               <label for="widthTab7">Ширина (мм):</label>
+               <input type="number" id="widthTab7" class="input-field" placeholder="Ширина (мм)" min="0" step="1" required title="Введите ширину в мм (например, 2000)" aria-required="true">
+               <span class="error-message" id="widthTab7-error" aria-live="polite"></span>
+             </div>
+           </div>
+           <label for="finishTypeTab7">Вид отделки:</label>
+           <select id="finishTypeTab7" class="finish-type" aria-label="Вид отделки"></select>
+           <label for="ceilingPaintingTab7">Покраска потолка:</label>
+           <select id="ceilingPaintingTab7" class="ceiling-painting" data-static="true" aria-label="Покраска потолка">
+             <option value="">Выберите опцию</option>
+             <option value="no">Нет</option>
+             <option value="yes">Да</option>
+           </select>
+           <label for="insulationTypeTab7">Вид утепления:</label>
+           <select id="insulationTypeTab7" class="insulation-type" aria-label="Вид утепления"></select>
+           <label for="finishDirectionTab7">Направление отделки:</label>
+           <select id="finishDirectionTab7" class="finish-direction" data-static="true" aria-label="Направление отделки">
+             <option value="">Выберите опцию</option>
+             <option value="vertical">Вертикально</option>
+             <option value="horizontal">Горизонтально</option>
+           </select>
+           <label for="extraMaterialTab7">Доп. параметр:</label>
+           <div class="form-row extra-material-row" data-tab-id="tab7">
+             <select id="extraMaterialTab7" class="extra-material" aria-label="Дополнительный материал"></select>
+             <input type="number" id="extraQuantityTab7" class="input-field" placeholder="Количество" min="0" step="1" required title="Введите количество (например, 5)" aria-required="true">
+             <span class="error-message" id="extraQuantityTab7-error" aria-live="polite"></span>
+             <button class="add-button" data-tab-id="tab7" aria-label="Добавить еще материал">Добавить еще</button>
+           </div>
+         </div>
+       </div>
+
+       <div id="tab8" class="tab-content" role="tabpanel">
+         <h2>Полы</h2>
+         <div class="form-group">
+           <div class="form-row main-row">
+             <div class="form-group">
+               <label for="lengthTab8">Длина (мм):</label>
+               <input type="number" id="lengthTab8" class="input-field" placeholder="Длина (мм)" min="0" step="1" required title="Введите длину в мм (например, 3000)" aria-required="true">
+               <span class="error-message" id="lengthTab8-error" aria-live="polite"></span>
+             </div>
+             <div class="form-group">
+               <label for="widthTab8">Ширина (мм):</label>
+               <input type="number" id="widthTab8" class="input-field" placeholder="Ширина (мм)" min="0" step="1" required title="Введите ширину в мм (например, 2000)" aria-required="true">
+               <span class="error-message" id="widthTab8-error" aria-live="polite"></span>
+             </div>
+           </div>
+           <label for="finishTypeTab8">Вид отделки:</label>
+           <select id="finishTypeTab8" class="finish-type" aria-label="Вид отделки"></select>
+           <label for="insulationTypeTab8">Вид утепления:</label>
+           <select id="insulationTypeTab8" class="insulation-type" aria-label="Вид утепления"></select>
+           <label for="extraMaterialTab8">Доп. параметр:</label>
+           <div class="form-row extra-material-row" data-tab-id="tab8">
+             <select id="extraMaterialTab8" class="extra-material" aria-label="Дополнительный материал"></select>
+             <input type="number" id="extraQuantityTab8" class="input-field" placeholder="Количество" min="0" step="1" required title="Введите количество (например, 5)" aria-required="true">
+             <span class="error-message" id="extraQuantityTab8-error" aria-live="polite"></span>
+             <button class="add-button" data-tab-id="tab8" aria-label="Добавить еще материал">Добавить еще</button>
+           </div>
+         </div>
+       </div>
+
+       <div id="tab9" class="tab-content" role="tabpanel">
+         <h2>Электрика</h2>
+         <div class="form-group">
+           <label for="cableTypeSelectTab9">Кабель:</label>
+           <div class="form-row">
+             <select id="cableTypeSelectTab9" class="cable-type" aria-label="Тип кабеля"></select>
+             <input type="number" id="cableQuantityInputTab9" class="input-field" placeholder="Количество (п.м.)" min="0" step="1" required title="Введите длину кабеля в п.м. (например, 10)" aria-required="true">
+             <span class="error-message" id="cableQuantityInputTab9-error" aria-live="polite"></span>
+           </div>
+           <label for="switchTypeSelectTab9">Выключатель:</label>
+           <div class="form-row">
+             <select id="switchTypeSelectTab9" class="switch-type" aria-label="Тип выключателя"></select>
+             <input type="number" id="switchQuantityInputTab9" class="input-field" placeholder="Количество" min="0" step="1" required title="Введите количество выключателей (например, 2)" aria-required="true">
+             <span class="error-message" id="switchQuantityInputTab9-error" aria-live="polite"></span>
+           </div>
+           <label for="socketTypeSelectTab9">Розетка:</label>
+           <div class="form-row">
+             <select id="socketTypeSelectTab9" class="socket-type" aria-label="Тип розетки"></select>
+             <input type="number" id="socketQuantityInputTab9" class="input-field" placeholder="Количество" min="0" step="1" required title="Введите количество розеток (например, 3)" aria-required="true">
+             <span class="error-message" id="socketQuantityInputTab9-error" aria-live="polite"></span>
+           </div>
+           <label for="spotTypeSelectTab9">Спот:</label>
+           <div class="form-row">
+             <select id="spotTypeSelectTab9" class="spot-type" aria-label="Тип спота"></select>
+             <input type="number" id="spotQuantityInputTab9" class="input-field" placeholder="Количество" min="0" step="1" required title="Введите количество спотов (например, 4)" aria-required="true">
+             <span class="error-message" id="spotQuantityInputTab9-error" aria-live="polite"></span>
+           </div>
+           <label for="extraMaterialTab9">Доп. параметр:</label>
+           <div class="form-row extra-material-row" data-tab-id="tab9">
+             <select id="extraMaterialTab9" class="extra-material" aria-label="Дополнительный материал"></select>
+             <input type="number" id="extraQuantityTab9" class="input-field" placeholder="Количество" min="0" step="1" required title="Введите количество (например, 5)" aria-required="true">
+             <span class="error-message" id="extraQuantityTab9-error" aria-live="polite"></span>
+             <button class="add-button" data-tab-id="tab9" aria-label="Добавить еще материал">Добавить еще</button>
+           </div>
+         </div>
+       </div>
+
+       <div id="tab10" class="tab-content" role="tabpanel">
+         <h2>Мебель</h2>
+         <div class="form-group">
+           <label for="furnitureNameSelectTab10">Название мебели:</label>
+           <select id="furnitureNameSelectTab10" class="furniture-name" data-static="true" aria-label="Название мебели">
+             <option value="">Выберите опцию</option>
+             <option value="none">Нет</option>
+             <option value="four-door-wardrobe">4-х створчатый шкаф</option>
+             <option value="cabinet">Тумба</option>
+             <option value="chest">Ларь</option>
+             <option value="table">Столик</option>
+           </select>
+           <label for="furnitureMaterialSelectTab10">Материал мебели:</label>
+           <select id="furnitureMaterialSelectTab10" class="furniture-material" aria-label="Материал мебели"></select>
+           <label for="furniturePaintingSelectTab10">Покраска мебели:</label>
+           <select id="furniturePaintingSelectTab10" class="furniture-painting" data-static="true" aria-label="Покраска мебели">
+             <option value="">Выберите опцию</option>
+             <option value="no">Нет</option>
+             <option value="yes">Да</option>
+           </select>
+           <label for="shelfTopMaterialSelectTab10">Полки Верх:</label>
+           <div class="form-row">
+             <select id="shelfTopMaterialSelectTab10" class="shelf-top-material" aria-label="Материал полок верх"></select>
+             <input type="number" id="shelfTopQuantityInputTab10" class="input-field" placeholder="Количество" min="0" step="1" required title="Введите количество полок (например, 2)" aria-required="true">
+             <span class="error-message" id="shelfTopQuantityInputTab10-error" aria-live="polite"></span>
+           </div>
+           <label for="shelfBottomMaterialSelectTab10">Полки Низ:</label>
+           <div class="form-row">
+             <select id="shelfBottomMaterialSelectTab10" class="shelf-bottom-material" aria-label="Материал полок низ"></select>
+             <input type="number" id="shelfBottomQuantityInputTab10" class="input-field" placeholder="Количество" min="0" step="1" required title="Введите количество полок (например, 2)" aria-required="true">
+             <span class="error-message" id="shelfBottomQuantityInputTab10-error" aria-live="polite"></span>
+           </div>
+           <label for="stoveSideSelectTab10">Бок у печки:</label>
+           <select id="stoveSideSelectTab10" class="stove-side" data-static="true" aria-label="Бок у печки">
+             <option value="">Выберите опцию</option>
+             <option value="no">Нет</option>
+             <option value="yes">Да</option>
+           </select>
+           <label for="countertopSelectTab10">Столешница:</label>
+           <select id="countertopSelectTab10" class="countertop" data-static="true" aria-label="Столешница">
+             <option value="">Выберите опцию</option>
+             <option value="no">Нет</option>
+             <option value="yes">Да</option>
+           </select>
+           <label for="extraMaterialTab10">Доп. параметр:</label>
+           <div class="form-row extra-material-row" data-tab-id="tab10">
+             <select id="extraMaterialTab10" class="extra-material" aria-label="Дополнительный материал"></select>
+             <input type="number" id="extraQuantityTab10" class="input-field" placeholder="Количество" min="0" step="1" required title="Введите количество (например, 5)" aria-required="true">
+             <span class="error-message" id="extraQuantityTab10-error" aria-live="polite"></span>
+             <button class="add-button" data-tab-id="tab10" aria-label="Добавить еще материал">Добавить еще</button>
+           </div>
+         </div>
+       </div>
+
+       <div id="tab11" class="tab-content" role="tabpanel">
+         <h2>Доп. параметр</h2>
+         <div class="form-group">
+           <label for="extraMaterialTab11">Доп. параметр:</label>
+           <div class="form-row extra-material-row" data-tab-id="tab11">
+             <select id="extraMaterialTab11" class="extra-material" aria-label="Дополнительный материал"></select>
+             <input type="number" id="extraQuantityTab11" class="input-field" placeholder="Количество" min="0" step="1" required title="Введите количество (например, 5)" aria-required="true">
+             <span class="error-message" id="extraQuantityTab11-error" aria-live="polite"></span>
+             <button class="add-button" data-tab-id="tab11" aria-label="Добавить еще материал">Добавить еще</button>
+           </div>
+         </div>
+       </div>
+
+       <div id="tab12" class="tab-content" role="tabpanel">
+         <h2>Управление материалами</h2>
+         <div class="material-form">
+           <h3>Добавить/редактировать материал</h3>
+           <div class="form-group">
+             <label for="newMaterialInput">Название материала:</label>
+             <input type="text" id="newMaterialInput" class="input-field" placeholder="Название материала" required title="Введите название материала (например, Доска 20x100)" aria-required="true">
+             <span class="error-message" id="newMaterialInput-error" aria-live="polite"></span>
+           </div>
+           <div class="form-group">
+             <label for="colorInput">Цвет:</label>
+             <input type="text" id="colorInput" class="input-field" placeholder="Цвет" title="Введите цвет (например, Белый)">
+             <span class="error-message" id="colorInput-error" aria-live="polite"></span>
+           </div>
+           <div class="form-group">
+             <label for="dimensionsInput">Размеры Д*Ш*В:</label>
+             <input type="text" id="dimensionsInput" class="input-field" placeholder="60*2.5 или 60*2.5*10" title="Введите размеры в формате Д*Ш или Д*Ш*В (например, 60*2.5 или 60*2.5*10)">
+             <span class="error-message" id="dimensionsInput-error" aria-live="polite"></span>
+           </div>
+           <div class="form-group">
+             <label for="priceInput">Цена:</label>
+             <input type="number" id="priceInput" class="input-field" placeholder="Цена" min="0" step="0.01" required title="Введите цену (например, 1500.50)" aria-required="true">
+             <span class="error-message" id="priceInput-error" aria-live="polite"></span>
+           </div>
+           <div class="form-group">
+             <label for="quantityInput">Количество:</label>
+             <input type="number" id="quantityInput" class="input-field" placeholder="Количество" min="0" step="1" required title="Введите количество (например, 10)" aria-required="true">
+             <span class="error-message" id="quantityInput-error" aria-live="polite"></span>
+           </div>
+           <div class="form-group">
+             <label for="unitSelect">Единица:</label>
+             <select id="unitSelect" aria-label="Единица измерения">
+               <option value="шт.">шт.</option>
+               <option value="п.м.">п.м.</option>
+               <option value="м²">м²</option>
+               <option value="л.">л.</option>
+             </select>
+           </div>
+           <div class="form-group categories-row">
+             <label>Категории:</label>
+             <div class="categories-controls">
+               <div class="form-row">
+                 <input type="text" id="categorySearchInput" class="input-field" placeholder="Поиск категорий..." aria-label="Поиск категорий">
+                 <select id="categoryFilterTabSelect" aria-label="Фильтр по вкладке">
+                   <option value="">Все вкладки</option>
+                   <option value="На заезд">На заезд</option>
+                   <option value="Остекление">Остекление</option>
+                   <option value="Главная стена">Главная стена</option>
+                   <option value="Фасадная стена">Фасадная стена</option>
+                   <option value="БЛ стена">БЛ стена</option>
+                   <option value="БП стена">БП стена</option>
+                   <option value="Потолок">Потолок</option>
+                   <option value="Полы">Полы</option>
+                   <option value="Электрика">Электрика</option>
+                   <option value="Мебель">Мебель</option>
+                   <option value="Доп. параметр">Доп. параметр</option>
+                 </select>
+               </div>
+               <div class="form-row">
+                 <button id="toggleAllCategoriesBtn" aria-label="Развернуть/свернуть все категории">Развернуть все</button>
+                 <button id="clearCategoriesBtn" aria-label="Сбросить выбор категорий">Сбросить выбор</button>
+                 <span id="selectedCategoriesCount" aria-live="polite">Выбрано: 0</span>
+               </div>
+               <div class="checkbox-container" id="categoriesContainer">
+                 <div>Загрузка категорий...</div>
+               </div>
+             </div>
+           </div>
+           <div class="form-group">
+             <label for="isHiddenInput">Скрытый материал:</label>
+             <input type="checkbox" id="isHiddenInput" name="isHidden" aria-label="Скрытый материал">
+           </div>
+           <button id="addMaterialBtn" aria-label="Добавить материал">Добавить материал</button>
+         </div>
+         <div class="material-actions">
+           <h3>Редактировать/удалить материал</h3>
+           <div class="form-group">
+             <label for="materialSelect">Выберите материал:</label>
+             <select id="materialSelect" aria-label="Выберите материал для редактирования или удаления"></select>
+           </div>
+           <div class="action-buttons">
+             <button id="editSelectedMaterialBtn" aria-label="Редактировать выбранный материал">Редактировать выбранный материал</button>
+             <button id="deleteSelectedMaterialBtn" aria-label="Удалить выбранный материал">Удалить выбранный материал</button>
+             <button id="resetAdminAccessBtn" aria-label="Сбросить доступ администратора">Сбросить доступ</button>
+           </div>
+         </div>
+         <div id="materialList" aria-live="polite">Загрузка материалов...</div>
+         <div class="pagination">
+           <button id="prevPageBtn" disabled aria-label="Предыдущая страница">Предыдущая</button>
+           <button id="nextPageBtn" aria-label="Следующая страница">Следующая</button>
+         </div>
+       </div>
+
+       <div class="results" id="results" aria-live="polite">
+         <h2>Результаты расчёта</h2>
+       </div>
+
+       <div class="buttons">
+         <button id="calculateBtn" aria-label="Рассчитать материалы">Рассчитать</button>
+         <button id="loadCalculationBtn" aria-label="Загрузить сохранённый расчёт">Загрузить расчёт</button>
+         <button id="saveCalculationBtn" aria-label="Сохранить текущий расчёт">Сохранить расчёт</button>
+       </div>
+
+       <div class="notification" id="notification" role="alert"></div>
+     </div>
+
+     <!-- Модальное окно для ввода пароля -->
+     <div id="passwordModal" class="modal">
+       <div class="modal-content">
+         <h2>Введите пароль</h2>
+         <form id="passwordForm">
+           <div class="form-group">
+             <input type="email" id="adminEmailInput" value="Sherbakov888@gmail.com" style="display: none;" autocomplete="username">
+             <input type="password" id="passwordInput" placeholder="Пароль" required aria-label="Пароль для доступа к управлению материалами" autocomplete="current-password">
+             <button type="button" id="submitPasswordBtn">Подтвердить</button>
+             <button type="button" id="cancelPasswordBtn">Отмена</button>
+             <p id="passwordError" class="error-message">Неверный пароль</p>
+           </div>
+         </form>
+       </div>
+     </div>
+
+     <script type="module" src="/src/modules/main.js"></script>
+   </body>
+   </html>

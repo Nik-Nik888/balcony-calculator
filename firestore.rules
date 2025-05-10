@@ -1,0 +1,35 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /materials/{materialId} {
+      allow read: if request.auth != null;
+      allow write: if request.auth != null && request.auth.token.admin == true;
+      
+      // Валидация структуры данных
+      allow create, update: if request.resource.data.name is string &&
+                               request.resource.data.name.size() <= 100 &&
+                               request.resource.data.categories is list &&
+                               request.resource.data.categories.size() > 0 &&
+                               request.resource.data.price is number &&
+                               request.resource.data.price >= 0 &&
+                               request.resource.data.quantity is number &&
+                               request.resource.data.quantity >= 0 &&
+                               request.resource.data.unit is string &&
+                               request.resource.data.unit.size() <= 20 &&
+                               (!exists(request.resource.data.dimensions) ||
+                                (request.resource.data.dimensions is map &&
+                                 request.resource.data.dimensions.length is number &&
+                                 request.resource.data.dimensions.length > 0 &&
+                                 request.resource.data.dimensions.width is number &&
+                                 request.resource.data.dimensions.width > 0 &&
+                                 (!exists(request.resource.data.dimensions.height) ||
+                                  request.resource.data.dimensions.height is number &&
+                                  request.resource.data.dimensions.height >= 0)));
+    }
+    
+    match /analytics/{docId} {
+      allow read: if request.auth != null && request.auth.token.admin == true;
+      allow write: if request.auth != null && request.auth.token.admin == true;
+    }
+  }
+}
