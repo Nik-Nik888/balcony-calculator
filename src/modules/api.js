@@ -1,6 +1,8 @@
-import { analytics, logEvent } from './firebase.js';
+/* global AbortController, clearTimeout */
+import { analytics, logEvent } from "./firebase.js";
 
-const MANAGE_MATERIALS_URL = 'https://us-central1-balconycalculator-15c42.cloudfunctions.net/manageMaterials';
+const MANAGE_MATERIALS_URL =
+  "https://us-central1-balconycalculator-15c42.cloudfunctions.net/manageMaterials";
 
 /**
  * Логирует ошибки в Firestore для аналитики.
@@ -14,16 +16,16 @@ async function logErrorToFirestore(action, userId, error, extra = {}) {
     await logEvent(analytics, `${action}_failed`, {
       action,
       message: error.message,
-      userId: userId || 'unauthenticated',
-      page_title: 'Balcony Calculator',
+      userId: userId || "unauthenticated",
+      page_title: "Balcony Calculator",
       ...extra,
     });
   } catch (logError) {
-    await logEvent(analytics, 'log_error_failed', {
+    await logEvent(analytics, "log_error_failed", {
       action,
       message: logError.message,
-      userId: userId || 'unauthenticated',
-      page_title: 'Balcony Calculator',
+      userId: userId || "unauthenticated",
+      page_title: "Balcony Calculator",
     });
   }
 }
@@ -40,21 +42,21 @@ async function logErrorToFirestore(action, userId, error, extra = {}) {
 async function makeApiRequest(action, body, authToken, userId) {
   logEvent(analytics, `${action}_initiated`, {
     action,
-    userId: userId || 'unauthenticated',
+    userId: userId || "unauthenticated",
     body,
-    page_title: 'Balcony Calculator',
+    page_title: "Balcony Calculator",
   });
 
   try {
-    if (!authToken || typeof authToken !== 'string') {
-      throw new Error('authToken must be a non-empty string');
+    if (!authToken || typeof authToken !== "string") {
+      throw new Error("authToken must be a non-empty string");
     }
-    if (!action || typeof action !== 'string') {
-      throw new Error('action must be a non-empty string');
+    if (!action || typeof action !== "string") {
+      throw new Error("action must be a non-empty string");
     }
     let effectiveUserId = userId;
-    if (!userId || typeof userId !== 'string') {
-      effectiveUserId = 'unauthenticated';
+    if (!userId || typeof userId !== "string") {
+      effectiveUserId = "unauthenticated";
     }
 
     const controller = new AbortController();
@@ -62,9 +64,9 @@ async function makeApiRequest(action, body, authToken, userId) {
 
     try {
       const response = await fetch(MANAGE_MATERIALS_URL, {
-        method: 'POST',
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
           Authorization: `Bearer ${authToken}`,
         },
         body: JSON.stringify({
@@ -79,7 +81,9 @@ async function makeApiRequest(action, body, authToken, userId) {
 
       if (!response.ok) {
         const errorText = await response.text();
-        throw new Error(`HTTP error: ${response.status} ${response.statusText} - ${errorText}`);
+        throw new Error(
+          `HTTP error: ${response.status} ${response.statusText} - ${errorText}`,
+        );
       }
 
       const result = await response.json();
@@ -87,20 +91,20 @@ async function makeApiRequest(action, body, authToken, userId) {
         action,
         userId: effectiveUserId,
         result,
-        page_title: 'Balcony Calculator',
+        page_title: "Balcony Calculator",
       });
 
       return result;
     } catch (fetchError) {
-      if (fetchError.name === 'AbortError') {
-        throw new Error('Request timed out');
+      if (fetchError.name === "AbortError") {
+        throw new Error("Request timed out");
       }
       throw fetchError;
     }
   } catch (error) {
     await logErrorToFirestore(action, userId, error, {
       body,
-      authToken: authToken ? '[provided]' : '[missing]',
+      authToken: authToken ? "[provided]" : "[missing]",
     });
     throw error;
   }
@@ -116,12 +120,18 @@ async function makeApiRequest(action, body, authToken, userId) {
  * @returns {Promise<Object>} Результат запроса.
  * @throws {Error} Если запрос не удался.
  */
-export async function getMaterials(category, page, itemsPerPage, authToken, userId) {
+export async function getMaterials(
+  category,
+  page,
+  itemsPerPage,
+  authToken,
+  userId,
+) {
   if (page < 0 || itemsPerPage <= 0) {
-    throw new Error('page must be non-negative and itemsPerPage must be positive');
+    throw new Error("page must be non-negative and itemsPerPage must be positive");
   }
   return makeApiRequest(
-    'getMaterials',
+    "getMaterials",
     {
       category: category || null,
       page: page || 0,
@@ -143,10 +153,10 @@ export async function getMaterials(category, page, itemsPerPage, authToken, user
  */
 export async function getCategories(page, itemsPerPage, authToken, userId) {
   if (page < 0 || itemsPerPage <= 0) {
-    throw new Error('page must be non-negative and itemsPerPage must be positive');
+    throw new Error("page must be non-negative and itemsPerPage must be positive");
   }
   return makeApiRequest(
-    'getCategories',
+    "getCategories",
     {
       page: page || 0,
       itemsPerPage: itemsPerPage || 50,
@@ -165,10 +175,10 @@ export async function getCategories(page, itemsPerPage, authToken, userId) {
  * @throws {Error} Если запрос не удался.
  */
 export async function addMaterial(data, authToken, userId) {
-  if (!data || typeof data !== 'object') {
-    throw new Error('data must be a non-empty object');
+  if (!data || typeof data !== "object") {
+    throw new Error("data must be a non-empty object");
   }
-  return makeApiRequest('addMaterial', { data }, authToken, userId);
+  return makeApiRequest("addMaterial", { data }, authToken, userId);
 }
 
 /**
@@ -179,16 +189,17 @@ export async function addMaterial(data, authToken, userId) {
  * @param {string} userId - ID пользователя.
  * @returns {Promise<Object>} Результат запроса.
  * @throws {Error} Если запрос не удался.
- */
+ LIBRARY
+*/
 export async function updateMaterial(materialId, data, authToken, userId) {
-  if (!materialId || typeof materialId !== 'string') {
-    throw new Error('materialId must be a non-empty string');
+  if (!materialId || typeof materialId !== "string") {
+    throw new Error("materialId must be a non-empty string");
   }
-  if (!data || typeof data !== 'object') {
-    throw new Error('data must be a non-empty object');
+  if (!data || typeof data !== "object") {
+    throw new Error("data must be a non-empty object");
   }
   return makeApiRequest(
-    'editMaterial',
+    "editMaterial",
     {
       data: { key: materialId, ...data },
     },
@@ -206,8 +217,13 @@ export async function updateMaterial(materialId, data, authToken, userId) {
  * @throws {Error} Если запрос не удался.
  */
 export async function deleteMaterial(materialId, authToken, userId) {
-  if (!materialId || typeof materialId !== 'string') {
-    throw new Error('materialId must be a non-empty string');
+  if (!materialId || typeof materialId !== "string") {
+    throw new Error("materialId must be a non-empty string");
   }
-  return makeApiRequest('deleteMaterial', { key: materialId }, authToken, userId);
+  return makeApiRequest(
+    "deleteMaterial",
+    { key: materialId },
+    authToken,
+    userId,
+  );
 }
