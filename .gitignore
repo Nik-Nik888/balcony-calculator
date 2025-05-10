@@ -7,3 +7,28 @@ functions/node_modules/
 *.log
 dist/
 .vite/
+# Logs
+*.log
+npm-debug.log*
+
+# Dependency directories
+node_modules/
+functions/node_modules/
+
+# Environment variables
+.env
+.env.*
+!.env.example
+
+# Firebase CLI temporary files
+.firebase/
+
+# Vite build output and cache
+dist/
+.vite/
+
+# ESLint cache
+.eslintcache
+
+# Optional npm cache
+.npm
