@@ -26,7 +26,7 @@
     "eslint-plugin-import": "^2.31.0",
     "eslint-plugin-prettier": "^5.4.0",
     "prettier": "^3.5.3",
-    "vite": "^5.4.8"
+    "vite": "^6.3.5"
   },
   "keywords": [
     "firebase",
@@ -43,6 +43,6 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/your-username/balcony-calculator.git"
+    "url": "https://github.com/Nik-Nik888/balcony-calculator.git"
   }
 }
