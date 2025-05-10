@@ -1,4 +1,3 @@
-/* global AbortController, clearTimeout */
 import { analytics, logEvent } from "./firebase.js";
 
 const MANAGE_MATERIALS_URL =
@@ -128,7 +127,9 @@ export async function getMaterials(
   userId,
 ) {
   if (page < 0 || itemsPerPage <= 0) {
-    throw new Error("page must be non-negative and itemsPerPage must be positive");
+    throw new Error(
+      "page must be non-negative and itemsPerPage must be positive",
+    );
   }
   return makeApiRequest(
     "getMaterials",
@@ -153,7 +154,9 @@ export async function getMaterials(
  */
 export async function getCategories(page, itemsPerPage, authToken, userId) {
   if (page < 0 || itemsPerPage <= 0) {
-    throw new Error("page must be non-negative and itemsPerPage must be positive");
+    throw new Error(
+      "page must be non-negative and itemsPerPage must be positive",
+    );
   }
   return makeApiRequest(
     "getCategories",
@@ -189,8 +192,7 @@ export async function addMaterial(data, authToken, userId) {
  * @param {string} userId - ID пользователя.
  * @returns {Promise<Object>} Результат запроса.
  * @throws {Error} Если запрос не удался.
- LIBRARY
-*/
+ */
 export async function updateMaterial(materialId, data, authToken, userId) {
   if (!materialId || typeof materialId !== "string") {
     throw new Error("materialId must be a non-empty string");

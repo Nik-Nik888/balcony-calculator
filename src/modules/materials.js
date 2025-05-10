@@ -166,7 +166,7 @@ function renderCategoryTree(tree, container, level) {
     summary.className = "category-summary";
 
     const span = document.createElement("span");
-    span.textContent = name697
+    span.textContent = name;
     summary.appendChild(span);
 
     const checkbox = document.createElement("input");
@@ -478,6 +478,7 @@ async function populateSelects(showNotification, authToken, userId) {
       "tab4",
       "tab5",
       "tab6",
+      "tab7",
       "tab7",
       "tab8",
       "tab9",
