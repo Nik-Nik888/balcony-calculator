@@ -1,8 +1,4 @@
-/**
- * categories.js - Определение категорий для материалов в приложении Balcony Calculator.
- * Категории используются для классификации материалов в Firestore и отображения их в интерфейсе
- * (например, в выпадающих списках на вкладках).
- */
+import { analytics, logEvent } from './firebase.js';
 
 /**
  * Объект категорий, структурированный по вкладкам.
@@ -11,13 +7,8 @@
  * @type {Object.<string, string[]>}
  */
 const categories = {
-  'На заезд': [
-    'Список на заезд',
-    'Крепеж',
-    'Плиточные работы',
-    'Доп. параметр',
-  ],
-  'Остекление': [
+  'На заезд': ['Список на заезд', 'Крепеж', 'Плиточные работы', 'Доп. параметр'],
+  Остекление: [
     'Что делаем',
     'Основная рама',
     'Наружная отделка',
@@ -28,54 +19,14 @@ const categories = {
     'Крыша',
     'Доп. параметр',
   ],
-  'Главная стена': [
-    'Вид отделки',
-    'Покраска стен',
-    'Вид утепления',
-    'Направление отделки',
-    'Доп. параметр',
-  ],
-  'Фасадная стена': [
-    'Вид отделки',
-    'Покраска стен',
-    'Вид утепления',
-    'Направление отделки',
-    'Доп. параметр',
-  ],
-  'БЛ стена': [
-    'Вид отделки',
-    'Покраска стен',
-    'Вид утепления',
-    'Направление отделки',
-    'Доп. параметр',
-  ],
-  'БП стена': [
-    'Вид отделки',
-    'Покраска стен',
-    'Вид утепления',
-    'Направление отделки',
-    'Доп. параметр',
-  ],
-  'Потолок': [
-    'Вид отделки',
-    'Покраска потолка',
-    'Вид утепления',
-    'Направление отделки',
-    'Доп. параметр',
-  ],
-  'Полы': [
-    'Вид отделки',
-    'Вид утепления',
-    'Доп. параметр',
-  ],
-  'Электрика': [
-    'Кабель',
-    'Выключатель',
-    'Розетка',
-    'Спот',
-    'Доп. параметр',
-  ],
-  'Мебель': [
+  'Главная стена': ['Вид отделки', 'Покраска стен', 'Вид утепления', 'Направление отделки', 'Доп. параметр'],
+  'Фасадная стена': ['Вид отделки', 'Покраска стен', 'Вид утепления', 'Направление отделки', 'Доп. параметр'],
+  'БЛ стена': ['Вид отделки', 'Покраска стен', 'Вид утепления', 'Направление отделки', 'Доп. параметр'],
+  'БП стена': ['Вид отделки', 'Покраска стен', 'Вид утепления', 'Направление отделки', 'Доп. параметр'],
+  Потолок: ['Вид отделки', 'Покраска потолка', 'Вид утепления', 'Направление отделки', 'Доп. параметр'],
+  Полы: ['Вид отделки', 'Вид утепления', 'Доп. параметр'],
+  Электрика: ['Кабель', 'Выключатель', 'Розетка', 'Спот', 'Доп. параметр'],
+  Мебель: [
     'Материал мебели',
     'Покраска мебели',
     'Полки Верх',
@@ -84,36 +35,45 @@ const categories = {
     'Столешница',
     'Доп. параметр',
   ],
-  'Доп. параметр': [
-    'Доп. параметр',
-  ],
+  'Доп. параметр': ['Доп. параметр'],
 };
 
 /**
  * Массив допустимых категорий в формате "TabName:SubCategory".
- * Используется для валидации и совместимости с текущей структурой Firestore.
+ * Используется для валидации и совместимости с Firestore.
  * @type {string[]}
  */
 const validCategories = Object.entries(categories).reduce((acc, [tab, subCategories]) => {
-  const tabCategories = subCategories.map(subCategory => `${tab}:${subCategory}`);
+  const tabCategories = subCategories.map((subCategory) => `${tab}:${subCategory}`);
   return acc.concat(tabCategories);
 }, []);
 
 /**
  * Проверяет, является ли указанная категория допустимой.
  * @param {string} category - Категория в формате "TabName:SubCategory".
- * @returns {boolean} Возвращает true, если категория допустима, иначе false.
+ * @returns {boolean} True, если категория допустима, иначе false.
  */
 function isValidCategory(category) {
+  const isValid = typeof category === 'string' && validCategories.includes(category);
+  logEvent(analytics, 'category_validation', {
+    category,
+    is_valid: isValid,
+    page_title: 'Balcony Calculator',
+    user_id: 'unknown',
+  });
   if (typeof category !== 'string') {
-    console.warn('isValidCategory: Category must be a string, received:', category);
-    return false;
+    logEvent(analytics, 'category_validation_failed', {
+      category,
+      reason: 'Category must be a string',
+      page_title: 'Balcony Calculator',
+      user_id: 'unknown',
+    });
   }
-  return validCategories.includes(category);
+  return isValid;
 }
 
 /**
- * Возвращает список всех вкладок (названий табов).
+ * Возвращает список всех вкладок.
  * @returns {string[]} Массив названий вкладок.
  */
 function getTabs() {
@@ -127,10 +87,33 @@ function getTabs() {
  */
 function getSubCategories(tabName) {
   if (typeof tabName !== 'string') {
-    console.warn('getSubCategories: TabName must be a string, received:', tabName);
+    logEvent(analytics, 'get_subcategories_failed', {
+      tabName,
+      reason: 'TabName must be a string',
+      page_title: 'Balcony Calculator',
+      user_id: 'unknown',
+    });
     return [];
   }
-  return categories[tabName] || [];
+
+  const subCategories = categories[tabName] || [];
+  logEvent(analytics, 'get_subcategories', {
+    tab_name: tabName,
+    subcategories_count: subCategories.length,
+    page_title: 'Balcony Calculator',
+    user_id: 'unknown',
+  });
+
+  if (!subCategories.length) {
+    logEvent(analytics, 'get_subcategories_failed', {
+      tabName,
+      reason: 'Tab not found',
+      page_title: 'Balcony Calculator',
+      user_id: 'unknown',
+    });
+  }
+
+  return subCategories;
 }
 
 export { categories, validCategories, isValidCategory, getTabs, getSubCategories };
