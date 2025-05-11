@@ -2,11 +2,17 @@ import {
   initializeMaterialActions,
   loadMaterialsTable,
   populateSelects,
-} from "./materials.js";
-import { initializeTabs } from "./tabs.js";
-import { validateForm } from "./validation.js";
-import { initializeCalculation } from "./calculation.js";
-import { analytics, logEvent, auth, onAuthStateChanged, db } from "./firebase.js";
+} from './materials.js';
+import { initializeTabs } from './tabs.js';
+import { validateForm } from './validation.js';
+import { initializeCalculation } from './calculation.js';
+import {
+  analytics,
+  logEvent,
+  auth,
+  onAuthStateChanged,
+  db,
+} from './firebase.js';
 
 /**
  * Логирует ошибки в Firestore для аналитики.
@@ -19,12 +25,16 @@ async function logErrorToFirestore(action, userId, error, extra = {}) {
   try {
     await logEvent(analytics, `${action}_failed`, {
       reason: error.message,
-      page_title: "Balcony Calculator",
-      user_id: userId || "unknown",
+      page_title: 'Balcony Calculator',
+      user_id: userId || 'unknown',
       ...extra,
     });
   } catch (logError) {
-    console.error(`Failed to log error to Firestore: ${logError.message}`);
+    await logEvent(analytics, 'log_error_failed', {
+      reason: logError.message,
+      page_title: 'Balcony Calculator',
+      user_id: userId || 'unknown',
+    });
   }
 }
 
@@ -36,18 +46,18 @@ async function logErrorToFirestore(action, userId, error, extra = {}) {
  */
 async function logToFirestore(event, userId, pageTitle) {
   try {
-    await db.collection("analytics").add({
+    await db.collection('analytics').add({
       event,
       userId,
       page_title: pageTitle,
       timestamp: new Date().toISOString(),
     });
   } catch (firestoreError) {
-    await logEvent(analytics, "firestore_log_failed", {
+    await logEvent(analytics, 'firestore_log_failed', {
       event,
       reason: firestoreError.message,
-      page_title: "Balcony Calculator",
-      user_id: userId || "unknown",
+      page_title: 'Balcony Calculator',
+      user_id: userId || 'unknown',
     });
   }
 }
@@ -58,23 +68,22 @@ async function logToFirestore(event, userId, pageTitle) {
  * @param {boolean} [isError=false] - Является ли уведомление ошибкой.
  */
 function showNotification(message, isError = false) {
-  const notification = document.getElementById("notification");
+  const notification = document.getElementById('notification');
   if (!notification) {
-    console.warn("Notification element not found");
-    logEvent(analytics, "notification_failed", {
-      reason: "Notification element not found",
-      page_title: "Balcony Calculator",
-      user_id: "unknown",
+    logEvent(analytics, 'notification_failed', {
+      reason: 'Notification element not found',
+      page_title: 'Balcony Calculator',
+      user_id: 'unknown',
     });
     return;
   }
   notification.textContent = message;
   notification.className = isError
-    ? "notification notification--error"
-    : "notification notification--success";
-  notification.style.display = "block";
+    ? 'notification notification--error'
+    : 'notification notification--success';
+  notification.style.display = 'block';
   setTimeout(() => {
-    notification.style.display = "none";
+    notification.style.display = 'none';
   }, 5000);
 }
 
@@ -83,9 +92,9 @@ function showNotification(message, isError = false) {
  * @returns {Promise<void>}
  */
 async function initialize() {
-  logEvent(analytics, "initialization_initiated", {
-    page_title: "Balcony Calculator",
-    user_id: "unknown",
+  await logEvent(analytics, 'initialization_initiated', {
+    page_title: 'Balcony Calculator',
+    user_id: 'unknown',
   });
 
   try {
@@ -93,11 +102,11 @@ async function initialize() {
       onAuthStateChanged(auth, async (user) => {
         try {
           if (!user) {
-            const errorMsg = "Пользователь не аутентифицирован";
+            const errorMsg = 'Пользователь не аутентифицирован';
             showNotification(errorMsg, true);
             await logErrorToFirestore(
-              "initialize",
-              "unauthenticated",
+              'initialize',
+              'unauthenticated',
               new Error(errorMsg),
             );
             reject(new Error(errorMsg));
@@ -109,11 +118,11 @@ async function initialize() {
           const idTokenResult = await user.getIdTokenResult();
           const isAdmin = idTokenResult.claims.admin === true;
 
-          logEvent(analytics, "sign_in", {
+          await logEvent(analytics, 'sign_in', {
             user_id: userId,
-            page_title: "Balcony Calculator",
+            page_title: 'Balcony Calculator',
           });
-          await logToFirestore(db, "sign_in", userId, "Balcony Calculator");
+          await logToFirestore(db, 'sign_in', userId, 'Balcony Calculator');
 
           await initializeTabs(showNotification, userId);
           await populateSelects(showNotification, token, userId);
@@ -127,21 +136,21 @@ async function initialize() {
               token,
               userId,
             );
-            logEvent(analytics, "admin_access_granted", {
-              page_title: "Balcony Calculator - Admin Mode",
+            await logEvent(analytics, 'admin_access_granted', {
+              page_title: 'Balcony Calculator - Admin Mode',
               user_id: userId,
             });
             await logToFirestore(
               db,
-              "admin_access_granted",
+              'admin_access_granted',
               userId,
-              "Balcony Calculator - Admin Mode",
+              'Balcony Calculator - Admin Mode',
             );
 
             const activeTab = document
-              .querySelector(".tab__button--active")
-              ?.getAttribute("data-tab");
-            if (activeTab === "tab12") {
+              .querySelector('.tab__button--active')
+              ?.getAttribute('data-tab');
+            if (activeTab === 'tab12') {
               await loadMaterialsTable(1, showNotification, token, userId);
             }
           }
@@ -153,22 +162,22 @@ async function initialize() {
             userId,
           );
 
-          logEvent(analytics, "page_view", {
-            page_title: "Balcony Calculator",
+          await logEvent(analytics, 'page_view', {
+            page_title: 'Balcony Calculator',
             user_id: userId,
           });
-          await logToFirestore(db, "page_view", userId, "Balcony Calculator");
+          await logToFirestore(db, 'page_view', userId, 'Balcony Calculator');
 
-          logEvent(analytics, "initialization_completed", {
-            page_title: "Balcony Calculator",
+          await logEvent(analytics, 'initialization_completed', {
+            page_title: 'Balcony Calculator',
             user_id: userId,
           });
           resolve();
         } catch (error) {
           showNotification(`Ошибка аутентификации: ${error.message}`, true);
           await logErrorToFirestore(
-            "initialize",
-            user?.uid || "unauthenticated",
+            'initialize',
+            user?.uid || 'unauthenticated',
             error,
           );
           reject(error);
@@ -180,20 +189,24 @@ async function initialize() {
       `Критическая ошибка инициализации: ${error.message}`,
       true,
     );
-    await logErrorToFirestore("initialize", "unauthenticated", error);
+    await logErrorToFirestore('initialize', 'unauthenticated', error);
     throw error;
   }
 }
 
 // Запускаем инициализацию после загрузки DOM
-document.addEventListener("DOMContentLoaded", async () => {
+document.addEventListener('DOMContentLoaded', async () => {
   try {
-    logEvent(analytics, "dom_loaded", {
-      page_title: "Balcony Calculator",
-      user_id: "unknown",
+    await logEvent(analytics, 'dom_loaded', {
+      page_title: 'Balcony Calculator',
+      user_id: 'unknown',
     });
     await initialize();
   } catch (error) {
-    console.error(`Initialization failed: ${error.message}`);
+    await logEvent(analytics, 'initialization_failed', {
+      reason: error.message,
+      page_title: 'Balcony Calculator',
+      user_id: 'unknown',
+    });
   }
 });
