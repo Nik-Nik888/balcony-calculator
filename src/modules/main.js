@@ -99,7 +99,7 @@ async function initialize() {
 
   try {
     await new Promise((resolve, reject) => {
-      onAuthStateChanged(auth, async (user) => {
+      onAuthStateChanged(auth, async user => {
         try {
           if (!user) {
             const errorMsg = 'Пользователь не аутентифицирован';
@@ -107,7 +107,7 @@ async function initialize() {
             await logErrorToFirestore(
               'initialize',
               'unauthenticated',
-              new Error(errorMsg),
+              new Error(errorMsg)
             );
             reject(new Error(errorMsg));
             return;
@@ -134,7 +134,7 @@ async function initialize() {
               loadMaterialsTable,
               populateSelects,
               token,
-              userId,
+              userId
             );
             await logEvent(analytics, 'admin_access_granted', {
               page_title: 'Balcony Calculator - Admin Mode',
@@ -144,7 +144,7 @@ async function initialize() {
               db,
               'admin_access_granted',
               userId,
-              'Balcony Calculator - Admin Mode',
+              'Balcony Calculator - Admin Mode'
             );
 
             const activeTab = document
@@ -159,7 +159,7 @@ async function initialize() {
             showNotification,
             validateForm,
             token,
-            userId,
+            userId
           );
 
           await logEvent(analytics, 'page_view', {
@@ -178,7 +178,7 @@ async function initialize() {
           await logErrorToFirestore(
             'initialize',
             user?.uid || 'unauthenticated',
-            error,
+            error
           );
           reject(error);
         }
@@ -187,7 +187,7 @@ async function initialize() {
   } catch (error) {
     showNotification(
       `Критическая ошибка инициализации: ${error.message}`,
-      true,
+      true
     );
     await logErrorToFirestore('initialize', 'unauthenticated', error);
     throw error;
