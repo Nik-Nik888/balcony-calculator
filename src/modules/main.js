@@ -6,7 +6,7 @@ import {
 import { initializeTabs } from "./tabs.js";
 import { validateForm } from "./validation.js";
 import { initializeCalculation } from "./calculation.js";
-import { analytics, logEvent, auth, onAuthStateChanged } from "./firebase.js";
+import { analytics, logEvent, auth, onAuthStateChanged, db } from "./firebase.js";
 
 /**
  * Логирует ошибки в Firestore для аналитики.
@@ -16,22 +16,25 @@ import { analytics, logEvent, auth, onAuthStateChanged } from "./firebase.js";
  * @param {Object} [extra] - Дополнительные данные для лога.
  */
 async function logErrorToFirestore(action, userId, error, extra = {}) {
-  await logEvent(analytics, `${action}_failed`, {
-    reason: error.message,
-    page_title: "Balcony Calculator",
-    user_id: userId || "unknown",
-    ...extra,
-  });
+  try {
+    await logEvent(analytics, `${action}_failed`, {
+      reason: error.message,
+      page_title: "Balcony Calculator",
+      user_id: userId || "unknown",
+      ...extra,
+    });
+  } catch (logError) {
+    console.error(`Failed to log error to Firestore: ${logError.message}`);
+  }
 }
 
 /**
  * Логирует событие в Firestore.
- * @param {Object} db - Инстанс Firestore.
  * @param {string} event - Название события.
  * @param {string} userId - ID пользователя.
  * @param {string} pageTitle - Заголовок страницы.
  */
-async function logToFirestore(db, event, userId, pageTitle) {
+async function logToFirestore(event, userId, pageTitle) {
   try {
     await db.collection("analytics").add({
       event,
@@ -40,7 +43,7 @@ async function logToFirestore(db, event, userId, pageTitle) {
       timestamp: new Date().toISOString(),
     });
   } catch (firestoreError) {
-    logEvent(analytics, "firestore_log_failed", {
+    await logEvent(analytics, "firestore_log_failed", {
       event,
       reason: firestoreError.message,
       page_title: "Balcony Calculator",
@@ -57,6 +60,7 @@ async function logToFirestore(db, event, userId, pageTitle) {
 function showNotification(message, isError = false) {
   const notification = document.getElementById("notification");
   if (!notification) {
+    console.warn("Notification element not found");
     logEvent(analytics, "notification_failed", {
       reason: "Notification element not found",
       page_title: "Balcony Calculator",
@@ -91,7 +95,7 @@ async function initialize() {
           if (!user) {
             const errorMsg = "Пользователь не аутентифицирован";
             showNotification(errorMsg, true);
-            logErrorToFirestore(
+            await logErrorToFirestore(
               "initialize",
               "unauthenticated",
               new Error(errorMsg),
@@ -109,7 +113,6 @@ async function initialize() {
             user_id: userId,
             page_title: "Balcony Calculator",
           });
-          const { db } = await import("./firebase.js");
           await logToFirestore(db, "sign_in", userId, "Balcony Calculator");
 
           await initializeTabs(showNotification, userId);
@@ -163,7 +166,7 @@ async function initialize() {
           resolve();
         } catch (error) {
           showNotification(`Ошибка аутентификации: ${error.message}`, true);
-          logErrorToFirestore(
+          await logErrorToFirestore(
             "initialize",
             user?.uid || "unauthenticated",
             error,
@@ -177,16 +180,20 @@ async function initialize() {
       `Критическая ошибка инициализации: ${error.message}`,
       true,
     );
-    logErrorToFirestore("initialize", "unauthenticated", error);
+    await logErrorToFirestore("initialize", "unauthenticated", error);
     throw error;
   }
 }
 
 // Запускаем инициализацию после загрузки DOM
 document.addEventListener("DOMContentLoaded", async () => {
-  logEvent(analytics, "dom_loaded", {
-    page_title: "Balcony Calculator",
-    user_id: "unknown",
-  });
-  await initialize();
+  try {
+    logEvent(analytics, "dom_loaded", {
+      page_title: "Balcony Calculator",
+      user_id: "unknown",
+    });
+    await initialize();
+  } catch (error) {
+    console.error(`Initialization failed: ${error.message}`);
+  }
 });
